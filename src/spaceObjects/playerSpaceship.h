@@ -11,6 +11,8 @@ enum ECommsState
     CS_Inactive,          // No active comms
     CS_OpeningChannel,    // Opening a comms channel
     CS_BeingHailed,       // Receiving a hail from an object
+    CS_InterceptingComms, // Intercepting enemy communication
+    CS_InterceptOpen,     // Intercepted message open
     CS_BeingHailedByGM,   //                   ... the GM
     CS_ChannelOpen,       // Comms open to an object
     CS_ChannelOpenPlayer, //           ... another player
@@ -45,6 +47,7 @@ public:
     // Base time it takes to perform an action
     constexpr static float shield_calibration_time = 25.0f;
     constexpr static float comms_channel_open_time = 2.0;
+    constexpr static float intercept_open_time = 1.0;
     constexpr static float scan_probe_charge_time = 10.0f;
     constexpr static float max_scanning_delay = 6.0;
     // Maximum number of self-destruction confirmation codes
@@ -115,6 +118,7 @@ private:
     // Comms variables
     ECommsState comms_state;
     float comms_open_delay;
+    float intercept_open_delay;
     string comms_target_name;
     string comms_incomming_message;
     P<SpaceObject> comms_target; // Server only
@@ -164,14 +168,18 @@ public:
     bool isCommsChatOpenToGM() { return comms_state == CS_ChannelOpenGM; }
     bool isCommsChatOpenToPlayer() { return comms_state == CS_ChannelOpenPlayer; }
     bool isCommsScriptOpen() { return comms_state == CS_ChannelOpen; }
+    bool isCommsInterceptOpen() { return comms_state == CS_InterceptOpen; }
+    bool isInterceptOpening() { return comms_state == CS_InterceptingComms; }
     ECommsState getCommsState() { return comms_state; }
     float getCommsOpeningDelay() { return comms_open_delay; }
+    float getInterceptOpeningDelay() { return intercept_open_delay; }
     const std::vector<string>& getCommsReplyOptions() const { return comms_reply_message; }
     P<SpaceObject> getCommsTarget() { return comms_target; }
     const string& getCommsTargetName() { return comms_target_name; }
     const string& getCommsIncommingMessage() { return comms_incomming_message; }
     bool hailCommsByGM(string target_name);
     bool hailByObject(P<SpaceObject> object, string opening_message);
+    bool interceptComms(P<SpaceObject> object, string opening_message);
     void setCommsMessage(string message);
     void addCommsIncommingMessage(string message);
     void addCommsOutgoingMessage(string message);
@@ -216,6 +224,7 @@ public:
     void commandAbortDock();
     void commandOpenTextComm(P<SpaceObject> obj);
     void commandCloseTextComm();
+    void commandCloseInterceptComm();
     void commandAnswerCommHail(bool awnser);
     void commandSendComm(uint8_t index);
     void commandSendCommPlayer(string message);

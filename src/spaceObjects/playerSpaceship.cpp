@@ -172,6 +172,7 @@ static const int16_t CMD_ABORT_DOCK = 0x0026;
 static const int16_t CMD_SET_MAIN_SCREEN_OVERLAY = 0x0027;
 static const int16_t CMD_HACKING_FINISHED = 0x0028;
 static const int16_t CMD_CUSTOM_FUNCTION = 0x0029;
+static const int16_t CMD_CLOSE_INTERCEPT_COMM = 0x0030;
 
 string alertLevelToString(EAlertLevel level)
 {
@@ -201,6 +202,7 @@ PlayerSpaceship::PlayerSpaceship()
     jump_indicator = 0.0;
     comms_state = CS_Inactive;
     comms_open_delay = 0.0;
+    intercept_open_delay = 0.0;
     shield_calibration_delay = 0.0;
     auto_repair_enabled = false;
     auto_coolant_enabled = false;
@@ -416,6 +418,15 @@ void PlayerSpaceship::update(float delta)
                 }
             }
         }
+        if (comms_state == CS_InterceptingComms)
+        {
+            if (intercept_open_delay > 0)
+            {
+                intercept_open_delay -= delta;
+            }else{
+                comms_state = CS_InterceptOpen;
+            }
+        }
         if (comms_state == CS_ChannelOpen || comms_state == CS_ChannelOpenPlayer)
         {
             if (!comms_target)
@@ -569,6 +580,9 @@ void PlayerSpaceship::update(float delta)
         // If opening comms, tick the comms open delay timer.
         if (comms_open_delay > 0)
             comms_open_delay -= delta;
+        // If intercepting comms, tick the intercept open delay timer.
+        if (intercept_open_delay > 0)
+            intercept_open_delay -= delta;
     }
 
     // Perform all other ship update actions.
@@ -997,6 +1011,27 @@ bool PlayerSpaceship::hailByObject(P<SpaceObject> object, string opening_message
     return true;
 }
 
+bool PlayerSpaceship::interceptComms(P<SpaceObject> object, string opening_message)
+{
+    // If trying to open comms with a non-object, return false.
+    if (isInterceptOpening())
+    {
+        if (comms_target != object)
+        {
+            return false;
+        }
+    }
+
+    // Receive a hail from the object.
+    comms_target = object;
+    comms_target_name = object->getCallSign();
+    intercept_open_delay = intercept_open_time;
+    comms_state = CS_InterceptingComms;
+    comms_incomming_message = opening_message;
+    return true;
+}
+
+
 void PlayerSpaceship::closeComms()
 {
     // If comms are closed, state it and log it to the ship's log.
@@ -1193,6 +1228,9 @@ void PlayerSpaceship::onReceiveClientCommand(int32_t client_id, sf::Packet& pack
     case CMD_CLOSE_TEXT_COMM:
         closeComms();
         break;
+    case CMD_CLOSE_INTERCEPT_COMM:
+            closeComms();
+            break;
     case CMD_ANSWER_COMM_HAIL:
         if (comms_state == CS_BeingHailed)
         {
@@ -1611,6 +1649,14 @@ void PlayerSpaceship::commandCloseTextComm()
     packet << CMD_CLOSE_TEXT_COMM;
     sendClientCommand(packet);
 }
+
+void PlayerSpaceship::commandCloseInterceptComm()
+{
+    sf::Packet packet;
+    packet << CMD_CLOSE_INTERCEPT_COMM;
+    sendClientCommand(packet);
+}
+
 
 void PlayerSpaceship::commandAnswerCommHail(bool awnser)
 {

@@ -17,6 +17,12 @@ private:
     GuiPanel* opening_box;
     GuiProgressbar* opening_progress;
     GuiButton* opening_cancel;
+
+    GuiPanel* opening_intercept;
+    GuiProgressbar* intercepting_progress;
+    GuiPanel* intercepted_comms_box;
+    GuiScrollText* intercepted_comms_text;
+    GuiButton* intercept_comms_close;
     
     GuiPanel* hailed_box;
     GuiLabel* hailed_label;
