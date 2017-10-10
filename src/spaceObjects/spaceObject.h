@@ -174,6 +174,7 @@ public:
     string getSectorName();
     bool openCommsTo(P<PlayerSpaceship> target);
     bool sendCommsMessage(P<PlayerSpaceship> target, string message);
+    bool interceptEnemyComms(P<PlayerSpaceship> target, string message);
 
     ScriptCallback onDestroyed;
 

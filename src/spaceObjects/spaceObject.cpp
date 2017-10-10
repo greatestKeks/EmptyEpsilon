@@ -63,6 +63,8 @@ REGISTER_SCRIPT_CLASS_NO_CREATE(SpaceObject)
     /// Return true when the hail is enabled with succes. Returns false when the target player cannot be hailed right now (because it's already communicating with something else)
     /// This function will display the message given as parameter when the hail is answered.
     REGISTER_SCRIPT_CLASS_FUNCTION(SpaceObject, sendCommsMessage);
+    /// This function will display the intercepted ennemy communication
+    REGISTER_SCRIPT_CLASS_FUNCTION(SpaceObject, interceptEnemyComms);
     /// Let this object take damage, the DamageInfo parameter can be empty, or a string which indicates if it's energy, kinetic or emp damage.
     REGISTER_SCRIPT_CLASS_FUNCTION(SpaceObject, takeDamage);
     // Set the description of this object. The description is visible on the
@@ -381,6 +383,19 @@ bool SpaceObject::sendCommsMessage(P<PlayerSpaceship> target, string message)
         return false;
 
     bool result = target->hailByObject(this, message);
+    if (!result && message != "")
+    {
+        target->addToShipLogBy(message, this);
+    }
+    return result;
+}
+
+bool SpaceObject::interceptEnemyComms(P<PlayerSpaceship> target, string message)
+{
+    if (!target)
+        return false;
+
+    bool result = target->interceptComms(this, message);
     if (!result && message != "")
     {
         target->addToShipLogBy(message, this);

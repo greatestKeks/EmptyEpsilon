@@ -21,6 +21,13 @@ GuiCommsOverlay::GuiCommsOverlay(GuiContainer* owner)
     opening_progress = new GuiProgressbar(opening_box, "COMMS_OPENING_PROGRESS", PlayerSpaceship::comms_channel_open_time, 0.0, 0.0);
     opening_progress->setSize(500, 40)->setPosition(50, -10, ABottomLeft);
 
+    // Panel for intercepting enemy communications.
+    opening_intercept = new GuiPanel(owner, "COMMS_OPENING_BOX");
+    opening_intercept->hide()->setSize(800, 100)->setPosition(0, -250, ABottomCenter);
+    (new GuiLabel(opening_intercept, "INTERCEPT_OPENING_LABEL", "Intercepting enemy communications...", 40))->setSize(GuiElement::GuiSizeMax, 50)->setPosition(0, 0, ATopCenter);
+    intercepting_progress = new GuiProgressbar(opening_intercept, "INTERCEPT_OPENING_PROGRESS", PlayerSpaceship::intercept_open_time, 0.0, 0.0);
+    intercepting_progress->setSize(500, 40)->setPosition(50, -10, ABottomLeft);
+
     // Cancel button closes the communication.
     opening_cancel = new GuiButton(opening_box, "COMMS_OPENING_CANCEL", "Cancel", []()
     {
@@ -143,6 +150,21 @@ GuiCommsOverlay::GuiCommsOverlay(GuiContainer* owner)
             my_spaceship->commandCloseTextComm();
     });
     script_comms_close->setTextSize(20)->setPosition(-20, -20, ABottomRight)->setSize(150, 50);
+
+    // Panel for intercepted communications.
+    intercepted_comms_box = new GuiPanel(owner, "INTERCETP_COMMS_BOX");
+    intercepted_comms_box->hide()->setSize(800, 600)->setPosition(0, -100, ABottomCenter);
+
+    // Text of incoming chat messages.
+    intercepted_comms_text = new GuiScrollText(intercepted_comms_box, "INTERCEPT_COMMS_TEXT", "");
+    intercepted_comms_text->enableAutoScrollDown()->setPosition(20, 30, ATopLeft)->setSize(760, 500);
+
+    // Button to close intercepted comms.
+    intercept_comms_close = new GuiButton(intercepted_comms_box, "CLOSE_BUTTON", "Close", [this]() {
+        if (my_spaceship)
+            my_spaceship->commandCloseInterceptComm();
+    });
+    intercept_comms_close->setTextSize(20)->setPosition(-20, -20, ABottomRight)->setSize(150, 50);
 }
 
 void GuiCommsOverlay::onDraw(sf::RenderTarget& window)
@@ -166,6 +188,12 @@ void GuiCommsOverlay::onDraw(sf::RenderTarget& window)
         
         script_comms_box->setVisible(my_spaceship->isCommsScriptOpen());
         script_comms_text->setText(my_spaceship->getCommsIncommingMessage());
+
+        opening_intercept->setVisible(my_spaceship->isInterceptOpening());
+        intercepting_progress->setValue(my_spaceship->getInterceptOpeningDelay());
+
+        intercepted_comms_box->setVisible(my_spaceship->isCommsInterceptOpen());
+        intercepted_comms_text->setText(my_spaceship->getCommsIncommingMessage());
 
         // Show the scripted comms options. If they've changed, update the lsit
         bool changed = script_comms_options->entryCount() != int(my_spaceship->getCommsReplyOptions().size());
